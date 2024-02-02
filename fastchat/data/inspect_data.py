@@ -30,4 +30,4 @@ if __name__ == "__main__":
         for conv in sample["conversations"]:
             print(conv["from"] + ": ")
             print(conv["value"])
-            input()
+            # input()
