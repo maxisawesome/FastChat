@@ -8,6 +8,8 @@ import json
 
 import numpy as np
 from tqdm import tqdm
+from composer.utils import dist, maybe_create_object_store_from_uri, parse_uri
+import shutil
 
 from fastchat.llm_judge.common import (
     load_questions,
@@ -165,6 +167,16 @@ def make_judge_single(judge_model, judge_prompts):
     )
     return judges
 
+def _write(destination_path, src_file):
+    obj_store = maybe_create_object_store_from_uri(destination_path)
+    _, _, save_path = parse_uri(destination_path)
+    if obj_store is not None:
+        obj_store.upload_object(object_name=save_path, filename=src_file)
+    else:
+        with dist.local_rank_zero_download_and_wait(destination_path):
+            if dist.get_local_rank() == 0:
+                shutil.copy(src_file, destination_path)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -320,3 +332,5 @@ if __name__ == "__main__":
                 executor.map(play_a_match_wrapper, matches), total=len(matches)
             ):
                 pass
+
+    _write(output_file, f"")
